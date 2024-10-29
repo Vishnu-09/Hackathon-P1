@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encryption Form</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <center>
+    <div class="form-container">
+        <h2>Register and Encrypt Data</h2>
+        <form id="encryptionForm">
+            <label>Photo: <input type="file" id="photo" accept="image/*" required></label><br><br>
+            <label>Name: <input type="text" id="name" required></label><br><br>
+            <label>Gender: 
+                <select id="gender" required>
+                    <option>Select</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Other</option>
+                </select>
+            </label><br><br>
+            <label>Phone Number: <input type="tel" id="phone" required></label><br><br>
+            <label>Emergency Phone (Guardian): <input type="tel" id="emergencyPhone" required></label><br><br>
+            <label>Blood Pressure: 
+                <select id="bloodPressure"><option>No</option><option>Yes</option></select>
+            </label><br><br>
+            <label>Diabetes: 
+                <select id="diabetes"><option>No</option><option>Yes</option></select>
+            </label><br><br>
+            <label>Physical Disabilities: 
+                <select id="disabilities" onchange="toggleDisabilityDetails(this)">
+                    <option>No</option><option>Yes</option>
+                </select>
+            </label><br><br>
+            <div id="disabilityDetails" style="display: none;">
+                <label>Details: <textarea id="disabilityDetailsText"></textarea></label><br><br>
+            </div>
+            <label>Prescription Images: <input type="file" id="prescriptionImages" accept="image/*" multiple></label><br><br>
+            <label>Scanning Documents: <input type="file" id="scanningDocs" accept="image/*" multiple></label><br><br>
+            <label>Life Insurance: 
+                <select id="lifeInsurance" onchange="toggleInsuranceUpload(this)">
+                    <option>No</option><option>Yes</option>
+                </select>
+            </label><br><br>
+            <div id="insuranceUpload" style="display: none;">
+                <label>Upload Insurance Document: <input type="file" id="insuranceFile" accept="image/*"></label><br><br>
+            </div>
+            <button type="button" onclick="generateQRCode()">Encrypt & Generate QR Code</button>
+        </form>
+
+        <h3>QR Code:</h3>
+        <div id="qrCode"></div>
+    </div>
+
+    <script>
+        function toggleDisabilityDetails(select) {
+            document.getElementById('disabilityDetails').style.display = select.value === 'Yes' ? 'block' : 'none';
+        }
+
+        function toggleInsuranceUpload(select) {
+            document.getElementById('insuranceUpload').style.display = select.value === 'Yes' ? 'block' : 'none';
+        }
+
+        async function getImageBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function generateQRCode() {
+            const photo = await getImageBase64(document.getElementById('photo').files[0]);
+            const prescriptions = [];
+            for (let file of document.getElementById('prescriptionImages').files) {
+                prescriptions.push(await getImageBase64(file));
+            }
+            const scanningDocs = [];
+            for (let file of document.getElementById('scanningDocs').files) {
+                scanningDocs.push(await getImageBase64(file));
+            }
+            const insuranceFile = document.getElementById('insuranceFile').files.length > 0 ? 
+                await getImageBase64(document.getElementById('insuranceFile').files[0]) : null;
+
+            const data = {
+                photo, name: $('#name').val(), gender: $('#gender').val(), phone: $('#phone').val(),
+                emergencyPhone: $('#emergencyPhone').val(), bloodPressure: $('#bloodPressure').val(),
+                diabetes: $('#diabetes').val(), disabilities: $('#disabilities').val() === 'Yes' ? $('#disabilityDetailsText').val() : 'No',
+                prescriptions, scanningDocs, lifeInsurance: $('#lifeInsurance').val() === 'Yes' ? insuranceFile : 'No'
+            };
+
+            const uniqueKey = Date.now().toString();
+            localStorage.setItem(uniqueKey, JSON.stringify(data));
+            $('#qrCode').empty();
+            new QRCode(document.getElementById("qrCode"), uniqueKey);
+            alert("QR Code generated. Scan to decrypt.");
+        }
+    </script>
+</body>
+</center>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decrypted Data</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Decrypted Information</h2>
+        <div id="decryptedInfo"></div>
+        <button onclick="downloadPDF()">Download as PDF</button>
+    </div>
+
+    <script>
+        const data = JSON.parse(sessionStorage.getItem("decryptedData"));
+        const container = document.getElementById("decryptedInfo");
+
+        if (data) {
+            container.innerHTML = `
+                <img src="${data.photo}" width="100" style="border-radius: 50%; margin: 10px;">
+                <p><strong>Name:</strong> ${data.name}</p>
+                <p><strong>Gender:</strong> ${data.gender}</p>
+                <p><strong>Phone:</strong> ${data.phone}</p>
+                <p><strong>Emergency Phone:</strong> ${data.emergencyPhone}</p>
+                <p><strong>Blood Pressure:</strong> ${data.bloodPressure}</p>
+                <p><strong>Diabetes:</strong> ${data.diabetes}</p>
+                <p><strong>Disabilities:</strong> ${data.disabilities}</p>
+                <h3>Prescription Images:</h3>
+                ${data.prescriptions.map(img => `<img src="${img}" width="100" style="margin: 5px;">`).join('')}
+                <h3>Scanning Documents:</h3>
+                ${data.scanningDocs.map(img => `<img src="${img}" width="100" style="margin: 5px;">`).join('')}
+                <h3>Life Insurance:</h3>
+                ${data.lifeInsurance !== 'No' ? `<img src="${data.lifeInsurance}" width="100">` : '<p>No insurance provided.</p>'}
+            `;
+        } else {
+            container.textContent = "No data available.";
+        }
+
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            pdf.text("Decrypted Information", 10, 10);
+
+            const offsetY = 20;
+            pdf.text(`Name: ${data.name}`, 10, offsetY + 10);
+            pdf.text(`Gender: ${data.gender}`, 10, offsetY + 20);
+            pdf.text(`Phone: ${data.phone}`, 10, offsetY + 30);
+            pdf.text(`Emergency Phone: ${data.emergencyPhone}`, 10, offsetY + 40);
+
+            let imgOffsetY = offsetY + 50;
+            data.prescriptions.forEach((img, index) => {
+                pdf.addImage(img, "JPEG", 10, imgOffsetY, 50, 50);
+                imgOffsetY += 60;
+            });
+
+            pdf.save("decrypted_data.pdf");
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Scanner</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.3.1/dist/jsQR.js"></script>
+</head>
+<body>
+    <center>
+    <div class="form-container">
+        <h2>Scan QR Code</h2>
+        <video id="camera" autoplay></video>
+        <p id="result">Waiting for QR code scan...</p>
+    </div>
+
+    <script>
+        const video = document.getElementById("camera");
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(stream => { video.srcObject = stream; video.play(); scanQRCode(); })
+            .catch(err => { $('#result').text("Error: " + err); });
+
+        function scanQRCode() {
+            const canvas = document.createElement("canvas");
+            const context = canvas.getContext("2d");
+            setInterval(() => {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const qrData = jsQR(context.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
+                    if (qrData) {
+                        const data = localStorage.getItem(qrData.data);
+                        sessionStorage.setItem("decryptedData", data);
+                        window.location.href = "decryptedData.html";
+                    }
+                }
+            }, 500);
+        }
+    </script>
+</body>
+</center>
+</html>
